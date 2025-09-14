@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -13,48 +13,38 @@ import {
   Shield,
   Zap
 } from 'lucide-react';
+import api from '../../services/api';
+
+const iconMap: { [key: string]: React.ElementType } = {
+  Users,
+  Shield,
+  Zap,
+  TrendingUp,
+};
 
 const HomePage: React.FC = () => {
-  const features = [
-    {
-      icon: Users,
-      title: 'Smart Matching',
-      description: 'AI-powered job matching connects the right workers with the right opportunities.'
-    },
-    {
-      icon: Shield,
-      title: 'Verified Profiles',
-      description: 'All workers and employers are verified for safety and reliability.'
-    },
-    {
-      icon: Zap,
-      title: 'Quick Hiring',
-      description: 'Streamlined process gets workers hired faster than ever before.'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Career Growth',
-      description: 'Track your progress and unlock new opportunities for advancement.'
-    }
-  ];
+  const [features, setFeatures] = useState<any[]>([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const [jobCategories, setJobCategories] = useState<string[]>([]);
 
-  const stats = [
-    { number: '10K+', label: 'Active Workers' },
-    { number: '5K+', label: 'Job Postings' },
-    { number: '95%', label: 'Success Rate' },
-    { number: '24/7', label: 'Support' }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, featuresRes, categoriesRes] = await Promise.all([
+          api.get('/home/stats'),
+          api.get('/home/features'),
+          api.get('/home/categories'),
+        ]);
+        setStats(statsRes.data);
+        setFeatures(featuresRes.data);
+        setJobCategories(categoriesRes.data);
+      } catch (error) {
+        console.error('Error fetching home page data:', error);
+      }
+    };
 
-  const jobCategories = [
-    'Construction',
-    'Manufacturing',
-    'Logistics',
-    'Healthcare',
-    'Retail',
-    'Hospitality',
-    'Maintenance',
-    'Security'
-  ];
+    fetchData();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -160,26 +150,29 @@ const HomePage: React.FC = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="card text-center group"
-              >
-                <div className="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <feature.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600">
-                  {feature.description}
-                </p>
-              </motion.div>
-            ))}
+            {features.map((feature, index) => {
+              const Icon = iconMap[feature.icon];
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  className="card text-center group"
+                >
+                  <div className="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                    {Icon && <Icon className="w-8 h-8 text-white" />}
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600">
+                    {feature.description}
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
